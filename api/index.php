@@ -28,9 +28,19 @@ $defaults = [
 // The direct (unpooled) connection is preferred: Neon's pooler failed on schema changes,
 // and a small app does not need pooling.
 $databaseUrl = getenv('DATABASE_URL_UNPOOLED') ?: getenv('DATABASE_URL');
-if ($databaseUrl && ! getenv('DB_URL')) {
-    $defaults['DB_CONNECTION'] = 'pgsql';
-    $defaults['DB_URL'] = $databaseUrl;
+if ($databaseUrl && ! getenv('DB_URL') && ($db = parse_url($databaseUrl))) {
+    // The runtime's libpq is too old for SNI, so Neon needs the endpoint ID as a
+    // connection option (added by App\Database\NeonPostgresConnector). See https://neon.com/sni
+    $defaults += [
+        'DB_CONNECTION' => 'pgsql',
+        'DB_HOST' => $db['host'],
+        'DB_PORT' => (string) ($db['port'] ?? 5432),
+        'DB_DATABASE' => ltrim($db['path'] ?? '/neondb', '/'),
+        'DB_USERNAME' => urldecode($db['user'] ?? ''),
+        'DB_PASSWORD' => urldecode($db['pass'] ?? ''),
+        'DB_SSLMODE' => 'require',
+        'DB_NEON_ENDPOINT' => preg_replace('/-pooler$/', '', explode('.', $db['host'])[0]),
+    ];
 }
 
 foreach ($defaults as $key => $value) {

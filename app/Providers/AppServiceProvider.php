@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Database\NeonPostgresConnector;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 
@@ -12,7 +13,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // Lets the live site reach Neon from hosts with an old PostgreSQL client library.
+        $this->app->bind('db.connector.pgsql', NeonPostgresConnector::class);
     }
 
     /**
