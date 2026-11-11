@@ -21,11 +21,20 @@ class GoogleAuthController extends Controller
         return filled(config('services.google.client_id')) && filled(config('services.google.client_secret'));
     }
 
+    /**
+     * The Google driver with the callback URL taken from the current request,
+     * so it is right both locally (http://127.0.0.1:8000) and live (https://…vercel.app).
+     */
+    private function google()
+    {
+        return Socialite::driver('google')->redirectUrl(route('auth.google.callback'));
+    }
+
     public function redirect(): RedirectResponse
     {
         abort_unless(self::enabled(), 404);
 
-        return Socialite::driver('google')->redirect();
+        return $this->google()->redirect();
     }
 
     public function callback(): RedirectResponse
@@ -33,7 +42,7 @@ class GoogleAuthController extends Controller
         abort_unless(self::enabled(), 404);
 
         try {
-            $google = Socialite::driver('google')->user();
+            $google = $this->google()->user();
         } catch (Throwable) {
             return redirect()->route('login')->withErrors(['email' => 'Google sign-in was cancelled or failed. Please try again.']);
         }

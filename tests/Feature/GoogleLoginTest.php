@@ -23,6 +23,7 @@ class GoogleLoginTest extends TestCase
     {
         $user = (new GoogleUser)->map(['id' => $id, 'email' => $email, 'name' => $name]);
         $driver = Mockery::mock();
+        $driver->shouldReceive('redirectUrl')->andReturnSelf();
         $driver->shouldReceive('user')->andReturn($user);
         Socialite::shouldReceive('driver')->with('google')->andReturn($driver);
     }
@@ -65,6 +66,7 @@ class GoogleLoginTest extends TestCase
     public function test_cancelled_google_login_returns_to_login_page(): void
     {
         $driver = Mockery::mock();
+        $driver->shouldReceive('redirectUrl')->andReturnSelf();
         $driver->shouldReceive('user')->andThrow(new \RuntimeException('denied'));
         Socialite::shouldReceive('driver')->with('google')->andReturn($driver);
 
