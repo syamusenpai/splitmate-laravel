@@ -1,0 +1,6 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+[x-cloak] { display: none !important; }
+input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.7); }
