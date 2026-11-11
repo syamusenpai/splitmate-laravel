@@ -24,10 +24,13 @@ $defaults = [
     'APP_EVENTS_CACHE' => '/tmp/events.php',
 ];
 
-// The Vercel + Neon integration provides DATABASE_URL; use it for PostgreSQL.
-if (getenv('DATABASE_URL') && ! getenv('DB_URL')) {
+// The Vercel + Neon integration provides DATABASE_URL(_UNPOOLED); use it for PostgreSQL.
+// The direct (unpooled) connection is preferred: Neon's pooler failed on schema changes,
+// and a small app does not need pooling.
+$databaseUrl = getenv('DATABASE_URL_UNPOOLED') ?: getenv('DATABASE_URL');
+if ($databaseUrl && ! getenv('DB_URL')) {
     $defaults['DB_CONNECTION'] = 'pgsql';
-    $defaults['DB_URL'] = getenv('DATABASE_URL');
+    $defaults['DB_URL'] = $databaseUrl;
 }
 
 foreach ($defaults as $key => $value) {
