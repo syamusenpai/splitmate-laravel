@@ -88,3 +88,18 @@ GOOGLE_REDIRECT_URI=http://127.0.0.1:8000/auth/google/callback
 
 New Google users get an account automatically; if the email already has a SplitMate account, Google is linked to it.
 Code: `app/Http/Controllers/Auth/GoogleAuthController.php` (Laravel Socialite), tests in `tests/Feature/GoogleLoginTest.php`.
+
+## Live deployment (Vercel + Neon, free)
+
+Live at **https://splitmate-laravel.vercel.app**. Every push to `main` redeploys automatically.
+
+- `vercel.json` runs Laravel through the community `vercel-php` runtime; `api/index.php` points Laravel's
+  caches, views, logs and sessions at `/tmp`, memory or cookies, because Vercel's file system is read-only.
+- Database: Neon PostgreSQL (added from the Vercel **Storage** tab, which sets `DATABASE_URL`).
+  `App\Database\NeonPostgresConnector` passes Neon's endpoint ID, because the runtime's PostgreSQL client is too old for SNI.
+- Environment variables in Vercel: `APP_KEY`, `APP_ENV=production`, `APP_DEBUG=false`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` (+ Neon's own).
+- Run migrations from your PC against Neon (use the direct host, without `-pooler`):
+
+```bash
+DB_CONNECTION=pgsql DB_URL="postgresql://...neon.tech/neondb?sslmode=require" DB_PORT=5432 php artisan migrate --force
+```
