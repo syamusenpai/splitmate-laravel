@@ -44,6 +44,25 @@ if (! is_dir('/tmp/views')) {
     @mkdir('/tmp/views', 0755, true);
 }
 
+// TEMPORARY deployment diagnostics (removed after debugging). Locked behind a key derived from APP_KEY.
+if (isset($_GET['__diag']) && getenv('APP_KEY') && hash_equals(substr(hash('sha256', getenv('APP_KEY')), 0, 16), (string) $_GET['__diag'])) {
+    header('Content-Type: text/plain');
+    foreach (['DATABASE_URL', 'DATABASE_URL_UNPOOLED', 'POSTGRES_URL', 'DB_URL', 'DB_CONNECTION', 'APP_KEY', 'APP_ENV'] as $k) {
+        echo $k, ': ', getenv($k) === false ? 'missing' : 'set ('.strlen(getenv($k)).' chars)', "\n";
+    }
+    echo 'pdo drivers: ', implode(',', PDO::getAvailableDrivers()), "\n";
+    try {
+        require __DIR__.'/../vendor/autoload.php';
+        $app = require __DIR__.'/../bootstrap/app.php';
+        $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
+        echo 'default connection: ', config('database.default'), "\n";
+        echo 'users: ', Illuminate\Support\Facades\DB::table('users')->count(), "\n";
+    } catch (Throwable $e) {
+        echo 'ERROR: ', get_class($e), ': ', preg_replace('/postgres(ql)?:\/\/[^\s]+/', '[url hidden]', $e->getMessage()), "\n";
+    }
+    exit;
+}
+
 // Make Laravel see the request as if it came through public/index.php.
 $_SERVER['SCRIPT_NAME'] = '/index.php';
 $_SERVER['SCRIPT_FILENAME'] = __DIR__.'/../public/index.php';
